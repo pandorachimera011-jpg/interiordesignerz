@@ -14,7 +14,7 @@ interface BetControlsProps {
 }
 
 const QUICK_STAKES = [50, 100, 200, 500];
-const COUNTDOWN_SECONDS = 5;
+const COUNTDOWN_SECONDS = 3;
 
 const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsProps) => {
   const [betAmount, setBetAmount] = useState(100);
