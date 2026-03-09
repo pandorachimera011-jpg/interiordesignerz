@@ -16,7 +16,7 @@ interface BetRecord {
 }
 
 const Profile = () => {
-  const { user, balance, demoBalance, isDemo, refreshBalance, loading } = useAuth();
+  const { user, balance, refreshBalance, loading } = useAuth();
   const navigate = useNavigate();
   const [bets, setBets] = useState<BetRecord[]>([]);
   const [loadingBets, setLoadingBets] = useState(true);
@@ -90,8 +90,8 @@ const Profile = () => {
   };
 
   const handleWithdraw = async () => {
-    if (isDemo || balance <= 0) {
-      toast.error("Withdrawals are only available for deposited/earned funds, not demo money.");
+    if (balance <= 0) {
+      toast.error("Your balance is KES 0. Deposit funds first.");
       return;
     }
     const amount = Number(withdrawAmount);

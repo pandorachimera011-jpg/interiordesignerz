@@ -15,7 +15,7 @@ type Status = "idle" | "loading" | "success";
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 5000];
 
 const WalletModal = ({ open, onClose }: WalletModalProps) => {
-  const { balance, demoBalance, isDemo } = useAuth();
+  const { balance } = useAuth();
   const [tab, setTab] = useState<Tab>("deposit");
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState("");
@@ -35,8 +35,8 @@ const WalletModal = ({ open, onClose }: WalletModalProps) => {
       return;
     }
     if (tab === "withdraw") {
-      if (isDemo || balance <= 0) {
-        toast.error("You can only withdraw deposited or earned funds, not demo money.");
+      if (balance <= 0) {
+        toast.error("Your balance is KES 0. Deposit funds first.");
         return;
       }
       if (numAmount > balance) {
@@ -61,7 +61,7 @@ const WalletModal = ({ open, onClose }: WalletModalProps) => {
     }, 1500);
   };
 
-  const canWithdraw = !isDemo && balance > 0;
+  const canWithdraw = balance > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -87,15 +87,6 @@ const WalletModal = ({ open, onClose }: WalletModalProps) => {
             )}
           </div>
           {/* Demo balance */}
-          <div className="text-center pt-2 border-t border-border">
-            <div className="flex items-center justify-center gap-1.5 mb-0.5">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Demo Balance</p>
-              <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">
-                Not Withdrawable
-              </span>
-            </div>
-            <p className="text-sm font-mono font-semibold text-muted-foreground">KES {demoBalance.toLocaleString()}</p>
-          </div>
         </div>
 
         {/* Tabs */}
@@ -131,10 +122,7 @@ const WalletModal = ({ open, onClose }: WalletModalProps) => {
             </div>
             <h3 className="text-sm font-semibold text-foreground">Withdrawal Not Available</h3>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-[250px]">
-              {isDemo
-                ? <>Your current balance is <strong className="text-foreground">demo money</strong> and cannot be withdrawn. Deposit real money via M-Pesa to start earning withdrawable funds.</>
-                : <>Your real balance is KES 0. Deposit and play to build a withdrawable balance.</>
-              }
+              Your real balance is KES 0. Deposit and play to build a withdrawable balance.
             </p>
             <Button
               onClick={() => setTab("deposit")}

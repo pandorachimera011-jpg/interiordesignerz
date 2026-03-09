@@ -3,7 +3,7 @@ import CrashHistory from "@/components/CrashHistory";
 import MultiplierDisplay from "@/components/MultiplierDisplay";
 import BetControls from "@/components/BetControls";
 import LiveBets from "@/components/LiveBets";
-import LiveChat from "@/components/LiveChat";
+
 import Leaderboard from "@/components/Leaderboard";
 import BettingRules from "@/components/BettingRules";
 import { useCrashGame } from "@/hooks/useCrashGame";
@@ -78,7 +78,7 @@ const Index = () => {
             </div>
           )}
 
-          <LiveChat />
+          
         </div>
 
         {/* Mobile: stacked bets below controls */}
