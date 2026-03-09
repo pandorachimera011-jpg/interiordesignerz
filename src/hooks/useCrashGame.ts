@@ -127,6 +127,9 @@ export function useCrashGame() {
     betSavedRef.current = false;
     startTimeRef.current = Date.now();
 
+    // Emit crash point for admin panel
+    window.dispatchEvent(new CustomEvent("admin-crash-point", { detail: cp }));
+
     intervalRef.current = setInterval(() => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const newMult = Math.pow(Math.E, elapsed * 0.15);

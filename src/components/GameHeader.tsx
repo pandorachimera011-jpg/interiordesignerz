@@ -1,17 +1,34 @@
-import { useState } from "react";
-import { Rocket, Shield, Volume2, VolumeX, LogIn, LogOut, User, Wallet } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Rocket, Shield, Volume2, VolumeX, LogIn, LogOut, User, Wallet, ShieldCheck } from "lucide-react";
 import { useSound } from "@/contexts/SoundContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import WalletModal from "@/components/WalletModal";
+import { supabase } from "@/integrations/supabase/client";
 
 const GameHeader = () => {
   const { muted, toggleMute } = useSound();
   const { user, balance, demoBalance, isDemo, signOut } = useAuth();
   const navigate = useNavigate();
   const [walletOpen, setWalletOpen] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
   const displayBalance = isDemo ? demoBalance : balance;
+
+  // Check admin role
+  useEffect(() => {
+    if (!user) { setIsAdminUser(false); return; }
+    const check = async () => {
+      const { data } = await (supabase as any)
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .single();
+      setIsAdminUser(!!data);
+    };
+    check();
+  }, [user]);
 
   return (
     <>
@@ -58,7 +75,7 @@ const GameHeader = () => {
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-1">
                 <span className="text-[10px] text-muted-foreground leading-none">Balance</span>
-                {isDemo && (
+                {!user && (
                   <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">
                     Demo
                   </span>
@@ -72,6 +89,15 @@ const GameHeader = () => {
 
           {user ? (
             <>
+              {isAdminUser && (
+                <button
+                  onClick={() => navigate("/admin")}
+                  className="w-8 h-8 rounded-full bg-gaming-gold/20 border border-gaming-gold/30 flex items-center justify-center hover:bg-gaming-gold/30 transition-colors"
+                  title="Admin Panel"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-gaming-gold" />
+                </button>
+              )}
               <button
                 onClick={() => navigate("/profile")}
                 className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors"

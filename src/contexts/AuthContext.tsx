@@ -39,8 +39,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return stored ? Number(stored) : DEMO_INITIAL_BALANCE;
   });
 
-  // Demo balance is used when not logged in, or when logged in but real balance is 0
-  const isDemo = !user || balance === 0;
+  // Demo balance is only used when not logged in
+  const isDemo = !user;
 
   const refreshBalance = async () => {
     if (!user) return;
