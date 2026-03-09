@@ -22,6 +22,7 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
   const [autoCashout, setAutoCashout] = useState<string>("2.00");
   const [autoCashoutEnabled, setAutoCashoutEnabled] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [betPhase, setBetPhase] = useState<BetPhase>("idle");
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const pendingBetRef = useRef<{ amount: number; cashout: number | null } | null>(null);
   const { user, balance } = useAuth();
@@ -29,11 +30,12 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
 
   const clearCountdown = useCallback(() => {
     if (countdownRef.current) {
-      clearInterval(countdownRef.current);
+      clearTimeout(countdownRef.current);
       countdownRef.current = null;
     }
     setCountdown(null);
     pendingBetRef.current = null;
+    setBetPhase("idle");
   }, []);
 
   const handleBet = () => {
@@ -44,6 +46,7 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
     if (gameState !== "waiting") return;
     const cashout = autoCashoutEnabled ? parseFloat(autoCashout) : null;
     pendingBetRef.current = { amount: betAmount, cashout };
+    setBetPhase("countdown");
     setCountdown(COUNTDOWN_SECONDS);
   };
 
@@ -51,16 +54,20 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
     clearCountdown();
   };
 
-  // Countdown timer
+  // Countdown timer — when it hits 0, mark as queued (wait for round to start)
   useEffect(() => {
     if (countdown === null) return;
 
     if (countdown <= 0) {
-      // Place the bet
-      if (pendingBetRef.current) {
+      // Countdown done — if round already running, place immediately; otherwise queue
+      if (gameState === "running" && pendingBetRef.current) {
         onPlaceBet(pendingBetRef.current.amount, pendingBetRef.current.cashout);
+        clearCountdown();
+      } else {
+        setBetPhase("queued");
+        setCountdown(null);
+        if (countdownRef.current) clearTimeout(countdownRef.current);
       }
-      clearCountdown();
       return;
     }
 
@@ -71,16 +78,16 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
     return () => {
       if (countdownRef.current) clearTimeout(countdownRef.current);
     };
-  }, [countdown, onPlaceBet, clearCountdown]);
+  }, [countdown, gameState, onPlaceBet, clearCountdown]);
 
-  // Cancel countdown if round starts
+  // When round starts and bet is queued or countdown active, place bet immediately
   useEffect(() => {
-    if (gameState === "running" && countdown !== null) {
-      // Place bet immediately when round starts during countdown
-      if (pendingBetRef.current) {
-        onPlaceBet(pendingBetRef.current.amount, pendingBetRef.current.cashout);
-      }
-      clearCountdown();
+    if (gameState === "running" && pendingBetRef.current && (betPhase === "queued" || betPhase === "countdown")) {
+      onPlaceBet(pendingBetRef.current.amount, pendingBetRef.current.cashout);
+      if (countdownRef.current) clearTimeout(countdownRef.current);
+      setCountdown(null);
+      pendingBetRef.current = null;
+      setBetPhase("idle");
     }
   }, [gameState, countdown, onPlaceBet, clearCountdown]);
 
