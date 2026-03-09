@@ -307,13 +307,9 @@ export function useCrashGame() {
     ) {
       const updatedBet = { ...currentBet, cashedOut: true, cashoutMultiplier: multiplier };
       setCurrentBet(updatedBet);
-      if (updatedBet.isDemo) {
-        updateDemoBalance(updatedBet.amount * multiplier);
-      } else {
-        saveBetResult(updatedBet, false);
-      }
+      saveBetResult(updatedBet, false);
     }
-  }, [multiplier, gameState, currentBet, saveBetResult, updateDemoBalance]);
+  }, [multiplier, gameState, currentBet, saveBetResult]);
 
   // Save loss on crash
   useEffect(() => {
