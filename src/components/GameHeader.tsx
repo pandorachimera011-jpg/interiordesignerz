@@ -75,7 +75,7 @@ const GameHeader = () => {
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-1">
                 <span className="text-[10px] text-muted-foreground leading-none">Balance</span>
-                {isDemo && (
+                {!user && (
                   <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">
                     Demo
                   </span>
