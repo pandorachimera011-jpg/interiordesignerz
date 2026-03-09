@@ -314,9 +314,7 @@ export function useCrashGame() {
   // Save loss on crash
   useEffect(() => {
     if (gameState === "crashed" && currentBet && !currentBet.cashedOut) {
-      if (!currentBet.isDemo) {
-        saveBetResult(currentBet, true);
-      }
+      saveBetResult(currentBet, true);
     }
   }, [gameState, currentBet, saveBetResult]);
 
