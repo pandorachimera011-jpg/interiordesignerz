@@ -14,82 +14,53 @@ interface BetControlsProps {
 }
 
 const QUICK_STAKES = [50, 100, 200, 500];
-const COUNTDOWN_SECONDS = 3;
-type BetPhase = "idle" | "countdown" | "queued";
+
+type BetPhase = "idle" | "pending" | "queued";
 
 const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsProps) => {
   const [betAmount, setBetAmount] = useState(100);
   const [autoCashout, setAutoCashout] = useState<string>("2.00");
   const [autoCashoutEnabled, setAutoCashoutEnabled] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null);
   const [betPhase, setBetPhase] = useState<BetPhase>("idle");
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const pendingBetRef = useRef<{ amount: number; cashout: number | null } | null>(null);
   const { user, balance } = useAuth();
   const navigate = useNavigate();
-
-  const clearCountdown = useCallback(() => {
-    if (countdownRef.current) {
-      clearTimeout(countdownRef.current);
-      countdownRef.current = null;
-    }
-    setCountdown(null);
-    pendingBetRef.current = null;
-    setBetPhase("idle");
-  }, []);
 
   const handleBet = () => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    if (gameState !== "waiting") return;
     const cashout = autoCashoutEnabled ? parseFloat(autoCashout) : null;
     pendingBetRef.current = { amount: betAmount, cashout };
-    setBetPhase("countdown");
-    setCountdown(COUNTDOWN_SECONDS);
+
+    if (gameState === "waiting") {
+      // Place bet immediately
+      onPlaceBet(betAmount, cashout);
+      setBetPhase("idle");
+      pendingBetRef.current = null;
+    } else if (gameState === "running") {
+      // Queue for next round — show cancel option
+      setBetPhase("queued");
+    }
   };
 
   const handleCancel = () => {
-    clearCountdown();
+    pendingBetRef.current = null;
+    setBetPhase("idle");
   };
 
-  // Countdown timer — when it hits 0, mark as queued (wait for round to start)
+  // When a new round starts in waiting state and we have a queued bet, place it
   useEffect(() => {
-    if (countdown === null) return;
-
-    if (countdown <= 0) {
-      // Countdown done — if round already running, place immediately; otherwise queue
-      if (gameState === "running" && pendingBetRef.current) {
-        onPlaceBet(pendingBetRef.current.amount, pendingBetRef.current.cashout);
-        clearCountdown();
-      } else {
-        setBetPhase("queued");
-        setCountdown(null);
-        if (countdownRef.current) clearTimeout(countdownRef.current);
-      }
-      return;
-    }
-
-    countdownRef.current = setTimeout(() => {
-      setCountdown((prev) => (prev !== null ? prev - 1 : null));
-    }, 1000);
-
-    return () => {
-      if (countdownRef.current) clearTimeout(countdownRef.current);
-    };
-  }, [countdown, gameState, onPlaceBet, clearCountdown]);
-
-  // When round starts and bet is queued or countdown active, place bet immediately
-  useEffect(() => {
-    if (gameState === "running" && pendingBetRef.current && (betPhase === "queued" || betPhase === "countdown")) {
+    if (gameState === "waiting" && betPhase === "queued" && pendingBetRef.current) {
       onPlaceBet(pendingBetRef.current.amount, pendingBetRef.current.cashout);
-      if (countdownRef.current) clearTimeout(countdownRef.current);
-      setCountdown(null);
       pendingBetRef.current = null;
       setBetPhase("idle");
     }
-  }, [gameState, countdown, onPlaceBet, clearCountdown]);
+  }, [gameState, betPhase, onPlaceBet]);
+
+  // Reset phase on crash if still queued
+  // (keep queued bets across crashes so they activate next waiting phase)
 
   // Watch-only mode for non-authenticated users
   if (!user) {
@@ -127,7 +98,7 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
             type="number"
             value={betAmount}
             onChange={(e) => setBetAmount(Number(e.target.value))}
-            disabled={countdown !== null}
+            disabled={betPhase !== "idle"}
             className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-foreground font-mono text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
           />
         </div>
@@ -138,7 +109,7 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
             <button
               key={stake}
               onClick={() => setBetAmount(stake)}
-              disabled={countdown !== null}
+              disabled={betPhase !== "idle"}
               className={`py-1.5 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ${
                 betAmount === stake
                   ? "bg-primary/20 text-primary border border-primary/30"
@@ -154,14 +125,14 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setBetAmount(Math.max(50, Math.floor(betAmount / 2)))}
-            disabled={countdown !== null}
+            disabled={betPhase !== "idle"}
             className="py-1.5 rounded-md text-xs font-semibold bg-secondary text-muted-foreground border border-border hover:text-foreground transition-colors disabled:opacity-50"
           >
             ½
           </button>
           <button
             onClick={() => setBetAmount(betAmount * 2)}
-            disabled={countdown !== null}
+            disabled={betPhase !== "idle"}
             className="py-1.5 rounded-md text-xs font-semibold bg-secondary text-muted-foreground border border-border hover:text-foreground transition-colors disabled:opacity-50"
           >
             2×
@@ -175,7 +146,7 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
           <label className="text-xs text-muted-foreground">Auto Cash Out</label>
           <button
             onClick={() => setAutoCashoutEnabled(!autoCashoutEnabled)}
-            disabled={countdown !== null}
+            disabled={betPhase !== "idle"}
             className={`w-9 h-5 rounded-full transition-colors relative ${
               autoCashoutEnabled ? "bg-primary" : "bg-secondary"
             }`}
@@ -193,7 +164,7 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
               type="text"
               value={autoCashout}
               onChange={(e) => setAutoCashout(e.target.value)}
-              disabled={countdown !== null}
+              disabled={betPhase !== "idle"}
               className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-foreground font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">x</span>
@@ -224,42 +195,19 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
             Cancel Bet
           </button>
         </div>
-      ) : countdown !== null ? (
-        <div className="space-y-2">
-          {/* Countdown progress */}
-          <div className="bg-secondary border border-primary/30 rounded-xl p-4 text-center space-y-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Placing bet in</p>
-            <div className="flex items-center justify-center gap-2">
-              <span className="font-mono text-3xl font-bold text-primary animate-pulse">{countdown}</span>
-              <span className="text-sm text-muted-foreground">sec</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              KES {betAmount.toLocaleString()} bet
-              {autoCashoutEnabled ? ` • Auto cashout at ${autoCashout}x` : ""}
-            </p>
-            {/* Progress bar */}
-            <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-1000 ease-linear"
-                style={{ width: `${((COUNTDOWN_SECONDS - countdown) / COUNTDOWN_SECONDS) * 100}%` }}
-              />
-            </div>
-          </div>
-          <button
-            onClick={handleCancel}
-            className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider bg-destructive/20 text-destructive border border-destructive/30 transition-all hover:bg-destructive/30 active:scale-[0.98] flex items-center justify-center gap-2"
-          >
-            <X className="w-4 h-4" />
-            Cancel Bet
-          </button>
-        </div>
       ) : (
         <button
           onClick={handleBet}
-          disabled={gameState === "running" || betAmount > balance}
+          disabled={betAmount > balance || gameState === "crashed"}
           className="w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider bg-primary text-primary-foreground glow-primary transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {gameState === "running" ? "Round in Progress" : betAmount > balance ? "Insufficient Balance" : "Place Bet"}
+          {betAmount > balance
+            ? "Insufficient Balance"
+            : gameState === "running"
+            ? "Place Bet (Next Round)"
+            : gameState === "crashed"
+            ? "Round Ending..."
+            : "Place Bet"}
         </button>
       )}
 

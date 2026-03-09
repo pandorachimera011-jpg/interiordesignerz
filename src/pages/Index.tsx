@@ -5,6 +5,7 @@ import BetControls from "@/components/BetControls";
 import LiveBets from "@/components/LiveBets";
 import LiveChat from "@/components/LiveChat";
 import Leaderboard from "@/components/Leaderboard";
+import BettingRules from "@/components/BettingRules";
 import { useCrashGame } from "@/hooks/useCrashGame";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { useEffect, useRef } from "react";
@@ -46,7 +47,7 @@ const Index = () => {
           <Leaderboard />
         </div>
 
-        {/* Multiplier display */}
+        {/* Multiplier display - same height as live bets */}
         <div className="flex flex-col min-h-[300px] sm:min-h-[350px] lg:min-h-0">
           <MultiplierDisplay
             gameState={gameState}
@@ -85,6 +86,11 @@ const Index = () => {
           <LiveBets roundKey={roundCount} />
           <Leaderboard />
         </div>
+      </div>
+
+      {/* Betting Rules */}
+      <div className="px-3 md:px-4 pb-3 md:pb-4 max-w-[1600px] mx-auto w-full">
+        <BettingRules />
       </div>
 
       {/* Footer */}
