@@ -57,22 +57,34 @@ const Profile = () => {
 
   const handleDeposit = async () => {
     const amount = Number(depositAmount);
-    if (amount < 100) {
-      toast.error("Minimum deposit is KES 100");
+    if (amount < 1) {
+      toast.error("Minimum deposit is KES 1");
+      return;
+    }
+    if (!phoneNumber || phoneNumber.length < 9) {
+      toast.error("Please enter a valid M-Pesa phone number");
       return;
     }
     setProcessing(true);
-    const { error } = await supabase
-      .from("balances")
-      .update({ amount: balance + amount })
-      .eq("user_id", user!.id);
-    if (error) {
-      toast.error("Deposit failed");
-    } else {
-      toast.success(`KES ${amount.toLocaleString()} deposited successfully!`);
-      await refreshBalance();
-      setDepositAmount("");
-      setShowDeposit(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("mpesa-stk-push", {
+        body: { phoneNumber, amount },
+      });
+      if (error) {
+        toast.error("Deposit failed: " + (error.message || "Unknown error"));
+      } else if (data?.success) {
+        toast.success("STK push sent! Check your phone to complete the M-Pesa payment.");
+        setDepositAmount("");
+        setShowDeposit(false);
+        // Poll for balance update
+        setTimeout(() => refreshBalance(), 10000);
+        setTimeout(() => refreshBalance(), 20000);
+        setTimeout(() => refreshBalance(), 30000);
+      } else {
+        toast.error(data?.error || "Deposit failed");
+      }
+    } catch (err) {
+      toast.error("Failed to initiate deposit");
     }
     setProcessing(false);
   };
