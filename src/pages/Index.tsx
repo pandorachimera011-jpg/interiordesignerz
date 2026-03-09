@@ -40,11 +40,10 @@ const Index = () => {
       <CrashHistory history={crashHistory} />
 
       <div className="flex-1 p-3 md:p-4 grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] xl:grid-cols-[320px_1fr_320px] gap-3 md:gap-4 max-w-[1600px] mx-auto w-full">
-        {/* Live bets + Chat - LEFT side (hidden on mobile) */}
+        {/* Live bets + Leaderboard - LEFT side (hidden on mobile) */}
         <div className="hidden lg:flex lg:flex-col gap-3 md:gap-4 overflow-hidden">
           <LiveBets roundKey={roundCount} />
           <Leaderboard />
-          <LiveChat />
         </div>
 
         {/* Multiplier display */}
@@ -56,7 +55,7 @@ const Index = () => {
           />
         </div>
 
-        {/* Bet controls - RIGHT side */}
+        {/* Bet controls + Chat - RIGHT side */}
         <div className="space-y-3 md:space-y-4">
           <BetControls
             gameState={gameState}
@@ -77,13 +76,14 @@ const Index = () => {
               </p>
             </div>
           )}
+
+          <LiveChat />
         </div>
 
-        {/* Mobile: stacked bets + chat below controls */}
+        {/* Mobile: stacked bets below controls */}
         <div className="lg:hidden space-y-3 col-span-1">
           <LiveBets roundKey={roundCount} />
           <Leaderboard />
-          <LiveChat />
         </div>
       </div>
 
