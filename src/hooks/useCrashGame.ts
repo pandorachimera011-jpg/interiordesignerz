@@ -172,7 +172,17 @@ export function useCrashGame() {
         const t2 = setTimeout(() => {
           if (!isLeaderRef.current || !mountedRef.current) return;
 
-          ch.send({ type: "broadcast", event: "phase", payload: { phase: "crashed", crashPoint: cp } });
+          // Update history and broadcast it along with crash
+          setCrashHistory(prev => {
+            const next = [Math.round(cp * 100) / 100, ...prev].slice(0, 20);
+            // Broadcast crash with full history so all clients sync
+            ch.send({
+              type: "broadcast",
+              event: "phase",
+              payload: { phase: "crashed", crashPoint: cp, history: next }
+            });
+            return next;
+          });
 
           // Leader handles crash locally
           if (tickRef.current) clearInterval(tickRef.current);
@@ -180,7 +190,6 @@ export function useCrashGame() {
           setCrashPoint(cp);
           setMultiplier(cp);
           setGameState("crashed");
-          setCrashHistory(prev => [Math.round(cp * 100) / 100, ...prev].slice(0, 20));
 
           // Next round
           const t3 = setTimeout(() => {
