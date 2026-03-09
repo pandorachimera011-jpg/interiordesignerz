@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Rocket, Shield, Volume2, VolumeX, LogIn, LogOut, User, Wallet } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Rocket, Shield, Volume2, VolumeX, LogIn, LogOut, User, Wallet, ShieldCheck } from "lucide-react";
 import { useSound } from "@/contexts/SoundContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
