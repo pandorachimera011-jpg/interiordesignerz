@@ -275,6 +275,13 @@ export function useCrashGame() {
       }
     });
 
+    // Sync history from leader when joining
+    ch.on("broadcast", { event: "history-sync" }, ({ payload }) => {
+      if (!isLeaderRef.current && payload.history && Array.isArray(payload.history)) {
+        setCrashHistory(prev => prev.length === 0 ? payload.history : prev);
+      }
+    });
+
     ch.on("presence", { event: "sync" }, evaluateLeadership);
 
     ch.subscribe(async (status) => {
