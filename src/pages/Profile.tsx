@@ -90,8 +90,8 @@ const Profile = () => {
   };
 
   const handleWithdraw = async () => {
-    if (isDemo || balance <= 0) {
-      toast.error("Withdrawals are only available for deposited/earned funds, not demo money.");
+    if (balance <= 0) {
+      toast.error("Your balance is KES 0. Deposit funds first.");
       return;
     }
     const amount = Number(withdrawAmount);

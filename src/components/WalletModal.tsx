@@ -122,10 +122,7 @@ const WalletModal = ({ open, onClose }: WalletModalProps) => {
             </div>
             <h3 className="text-sm font-semibold text-foreground">Withdrawal Not Available</h3>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-[250px]">
-              {isDemo
-                ? <>Your current balance is <strong className="text-foreground">demo money</strong> and cannot be withdrawn. Deposit real money via M-Pesa to start earning withdrawable funds.</>
-                : <>Your real balance is KES 0. Deposit and play to build a withdrawable balance.</>
-              }
+              Your real balance is KES 0. Deposit and play to build a withdrawable balance.
             </p>
             <Button
               onClick={() => setTab("deposit")}
