@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Rocket, Phone, Eye, EyeOff } from "lucide-react";
+import { Rocket, Phone, Eye, EyeOff, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 type AuthMode = "login" | "signup";
 
-// Convert phone to email format for auth (workaround for phone provider being disabled)
 const phoneToEmail = (phone: string) => {
   const cleaned = phone.replace(/[^0-9+]/g, "");
   return `${cleaned}@mozzatbet.app`;
@@ -18,6 +17,7 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -36,12 +36,16 @@ const Auth = () => {
           email,
           password,
           options: {
-            data: { username, display_name: username, phone_number: phone },
+            data: {
+              username,
+              display_name: username,
+              phone_number: phone,
+              referral_code: referralCode || undefined,
+            },
           },
         });
         if (error) throw error;
         toast.success("Account created! Signing you in...");
-        // Auto sign in after signup
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
         navigate("/");
@@ -60,7 +64,6 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
-        {/* Logo */}
         <div className="flex flex-col items-center gap-3">
           <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center glow-primary">
             <Rocket className="w-7 h-7 text-primary-foreground" />
@@ -73,17 +76,32 @@ const Auth = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="Choose a username"
-                className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
+            <>
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground">Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  placeholder="Choose a username"
+                  className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" /> Referral Code
+                </label>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  placeholder="Enter referral code (optional)"
+                  className="w-full bg-secondary border border-border rounded-lg px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </>
           )}
 
           <div className="space-y-1.5">
@@ -121,16 +139,11 @@ const Auth = () => {
             </div>
           </div>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 text-sm font-bold uppercase tracking-wider"
-          >
+          <Button type="submit" disabled={loading} className="w-full py-3 text-sm font-bold uppercase tracking-wider">
             {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
           </Button>
         </form>
 
-        {/* Toggle mode */}
         <p className="text-center text-sm text-muted-foreground">
           {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
           <button
@@ -138,13 +151,6 @@ const Auth = () => {
             className="text-primary font-semibold hover:underline"
           >
             {mode === "login" ? "Sign Up" : "Sign In"}
-          </button>
-        </p>
-
-        {/* Demo link */}
-        <p className="text-center text-xs text-muted-foreground">
-          <button onClick={() => navigate("/")} className="text-primary/70 hover:text-primary hover:underline">
-            Watch the game as a demo →
           </button>
         </p>
       </div>
