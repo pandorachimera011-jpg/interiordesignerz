@@ -172,7 +172,17 @@ export function useCrashGame() {
         const t2 = setTimeout(() => {
           if (!isLeaderRef.current || !mountedRef.current) return;
 
-          ch.send({ type: "broadcast", event: "phase", payload: { phase: "crashed", crashPoint: cp } });
+          // Update history and broadcast it along with crash
+          setCrashHistory(prev => {
+            const next = [Math.round(cp * 100) / 100, ...prev].slice(0, 20);
+            // Broadcast crash with full history so all clients sync
+            ch.send({
+              type: "broadcast",
+              event: "phase",
+              payload: { phase: "crashed", crashPoint: cp, history: next }
+            });
+            return next;
+          });
 
           // Leader handles crash locally
           if (tickRef.current) clearInterval(tickRef.current);
@@ -180,7 +190,6 @@ export function useCrashGame() {
           setCrashPoint(cp);
           setMultiplier(cp);
           setGameState("crashed");
-          setCrashHistory(prev => [Math.round(cp * 100) / 100, ...prev].slice(0, 20));
 
           // Next round
           const t3 = setTimeout(() => {
@@ -193,6 +202,10 @@ export function useCrashGame() {
       timeoutsRef.current.push(t1);
     };
   }, [clearAllTimers, startTicker]);
+
+  // Ref to access crashHistory from callbacks
+  const crashHistoryRef = useRef<number[]>([]);
+  useEffect(() => { crashHistoryRef.current = crashHistory; }, [crashHistory]);
 
   // Evaluate leadership from presence
   const evaluateLeadership = useCallback(() => {
@@ -211,6 +224,15 @@ export function useCrashGame() {
     if (!wasLeader && isLeaderRef.current) {
       console.log("[CrashGame] Became leader, starting game loop");
       startLeaderRoundRef.current();
+    }
+
+    // Leader sends sync with current history when presence changes (new joiner)
+    if (isLeaderRef.current && crashHistoryRef.current.length > 0) {
+      channelRef.current.send({
+        type: "broadcast",
+        event: "history-sync",
+        payload: { history: crashHistoryRef.current }
+      });
     }
   }, []);
 
@@ -244,7 +266,19 @@ export function useCrashGame() {
         setCrashPoint(cp);
         setMultiplier(cp);
         setGameState("crashed");
-        setCrashHistory(prev => [Math.round(cp * 100) / 100, ...prev].slice(0, 20));
+        // Use the shared history from the leader if available
+        if (payload.history && Array.isArray(payload.history)) {
+          setCrashHistory(payload.history);
+        } else {
+          setCrashHistory(prev => [Math.round(cp * 100) / 100, ...prev].slice(0, 20));
+        }
+      }
+    });
+
+    // Sync history from leader when joining
+    ch.on("broadcast", { event: "history-sync" }, ({ payload }) => {
+      if (!isLeaderRef.current && payload.history && Array.isArray(payload.history)) {
+        setCrashHistory(prev => prev.length === 0 ? payload.history : prev);
       }
     });
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, TrendingUp, TrendingDown, Trophy, Wallet, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Trophy, Wallet, ArrowDownToLine, ArrowUpFromLine, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -217,6 +217,15 @@ const Profile = () => {
             </p>
           </div>
         </div>
+
+        {/* View All Transactions */}
+        <Button
+          onClick={() => navigate("/transactions")}
+          variant="outline"
+          className="w-full gap-2"
+        >
+          <Clock className="w-4 h-4" /> View Full Transaction History
+        </Button>
 
         {/* Bet History */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
