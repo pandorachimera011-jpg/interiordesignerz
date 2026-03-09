@@ -195,7 +195,7 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">Balance</span>
-          {isDemo && (
+          {!user && (
             <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">Demo</span>
           )}
         </div>
