@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, TrendingUp, TrendingDown, Trophy, Wallet, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Trophy, Wallet, ArrowDownToLine, ArrowUpFromLine, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
