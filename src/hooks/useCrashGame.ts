@@ -15,6 +15,7 @@ export function useCrashGame() {
   const [crashPoint, setCrashPoint] = useState(0);
   const [currentBet, setCurrentBet] = useState<Bet | null>(null);
   const [roundCount, setRoundCount] = useState(0);
+  const [crashHistory, setCrashHistory] = useState<number[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef(0);
 
