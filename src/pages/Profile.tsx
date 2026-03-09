@@ -218,6 +218,15 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* View All Transactions */}
+        <Button
+          onClick={() => navigate("/transactions")}
+          variant="outline"
+          className="w-full gap-2"
+        >
+          <Clock className="w-4 h-4" /> View Full Transaction History
+        </Button>
+
         {/* Bet History */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-border">
