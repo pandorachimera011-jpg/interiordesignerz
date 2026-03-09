@@ -203,6 +203,10 @@ export function useCrashGame() {
     };
   }, [clearAllTimers, startTicker]);
 
+  // Ref to access crashHistory from callbacks
+  const crashHistoryRef = useRef<number[]>([]);
+  useEffect(() => { crashHistoryRef.current = crashHistory; }, [crashHistory]);
+
   // Evaluate leadership from presence
   const evaluateLeadership = useCallback(() => {
     if (!channelRef.current) return;
@@ -220,6 +224,15 @@ export function useCrashGame() {
     if (!wasLeader && isLeaderRef.current) {
       console.log("[CrashGame] Became leader, starting game loop");
       startLeaderRoundRef.current();
+    }
+
+    // Leader sends sync with current history when presence changes (new joiner)
+    if (isLeaderRef.current && crashHistoryRef.current.length > 0) {
+      channelRef.current.send({
+        type: "broadcast",
+        event: "history-sync",
+        payload: { history: crashHistoryRef.current }
+      });
     }
   }, []);
 
