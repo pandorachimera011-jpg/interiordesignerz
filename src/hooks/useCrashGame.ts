@@ -51,7 +51,7 @@ export function useCrashGame() {
 
   // Save bet result to DB
   const saveBetResult = useCallback(async (bet: Bet, crashed: boolean) => {
-    if (bet.isDemo || !user || betSavedRef.current) return;
+    if (!user || betSavedRef.current) return;
     betSavedRef.current = true;
 
     const cashoutMult = bet.cashedOut ? bet.cashoutMultiplier : null;
