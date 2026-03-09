@@ -89,6 +89,15 @@ const GameHeader = () => {
 
           {user ? (
             <>
+              {isAdminUser && (
+                <button
+                  onClick={() => navigate("/admin")}
+                  className="w-8 h-8 rounded-full bg-gaming-gold/20 border border-gaming-gold/30 flex items-center justify-center hover:bg-gaming-gold/30 transition-colors"
+                  title="Admin Panel"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-gaming-gold" />
+                </button>
+              )}
               <button
                 onClick={() => navigate("/profile")}
                 className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors"
