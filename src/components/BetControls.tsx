@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { LogIn, X } from "lucide-react";
+import { LogIn, X, Wallet } from "lucide-react";
 
 type GameState = "waiting" | "running" | "crashed";
 
@@ -23,24 +23,20 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
   const [autoCashoutEnabled, setAutoCashoutEnabled] = useState(false);
   const [betPhase, setBetPhase] = useState<BetPhase>("idle");
   const pendingBetRef = useRef<{ amount: number; cashout: number | null } | null>(null);
-  const { user, balance } = useAuth();
+  const { user, balance, demoBalance, isDemo } = useAuth();
   const navigate = useNavigate();
 
+  const activeBalance = isDemo ? demoBalance : balance;
+
   const handleBet = () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
     const cashout = autoCashoutEnabled ? parseFloat(autoCashout) : null;
     pendingBetRef.current = { amount: betAmount, cashout };
 
     if (gameState === "waiting") {
-      // Place bet immediately
       onPlaceBet(betAmount, cashout);
       setBetPhase("idle");
       pendingBetRef.current = null;
     } else if (gameState === "running") {
-      // Queue for next round — show cancel option
       setBetPhase("queued");
     }
   };
@@ -50,7 +46,6 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
     setBetPhase("idle");
   };
 
-  // When a new round starts in waiting state and we have a queued bet, place it
   useEffect(() => {
     if (gameState === "waiting" && betPhase === "queued" && pendingBetRef.current) {
       onPlaceBet(pendingBetRef.current.amount, pendingBetRef.current.cashout);
@@ -59,36 +54,38 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
     }
   }, [gameState, betPhase, onPlaceBet]);
 
-  // Reset phase on crash if still queued
-  // (keep queued bets across crashes so they activate next waiting phase)
-
-  // Watch-only mode for non-authenticated users
-  if (!user) {
-    return (
-      <div className="bg-card border border-border rounded-xl p-6 flex flex-col items-center gap-4 text-center">
-        <div className="w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
-          <LogIn className="w-6 h-6 text-primary" />
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">Watch Mode</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            You're watching the game as a demo. Sign in to place bets and win real KES!
-          </p>
-        </div>
-        <Button
-          onClick={() => navigate("/auth")}
-          className="w-full py-3 text-sm font-bold uppercase tracking-wider"
-        >
-          Sign In to Play
-        </Button>
-        <p className="text-[10px] text-muted-foreground">New players get KES 1,000 starter balance</p>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-card border border-border rounded-xl p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Place Bet</h3>
+      {/* Mode indicator */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Place Bet</h3>
+        {isDemo ? (
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent text-accent-foreground">
+            Demo Mode
+          </span>
+        ) : (
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gaming-green/20 text-gaming-green border border-gaming-green/30">
+            Real Money
+          </span>
+        )}
+      </div>
+
+      {/* Logged in but no real balance - prompt to deposit */}
+      {user && isDemo && (
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-center space-y-2">
+          <p className="text-[11px] text-muted-foreground">
+            You're playing with <strong className="text-foreground">demo money</strong>. Deposit to play with real KES.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs gap-1.5"
+            onClick={() => navigate("/profile")}
+          >
+            <Wallet className="w-3 h-3" /> Deposit Real Money
+          </Button>
+        </div>
+      )}
 
       {/* Bet amount input */}
       <div className="space-y-2">
@@ -198,10 +195,10 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
       ) : (
         <button
           onClick={handleBet}
-          disabled={betAmount > balance || gameState === "crashed"}
+          disabled={betAmount > activeBalance || gameState === "crashed"}
           className="w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider bg-primary text-primary-foreground glow-primary transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {betAmount > balance
+          {betAmount > activeBalance
             ? "Insufficient Balance"
             : gameState === "running"
             ? "Place Bet (Next Round)"
@@ -215,10 +212,26 @@ const BetControls = ({ gameState, onPlaceBet, onCashout, hasBet }: BetControlsPr
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">Balance</span>
-          <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">Demo</span>
+          {isDemo && (
+            <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">Demo</span>
+          )}
         </div>
-        <span className="font-mono text-sm font-semibold text-foreground">KES {balance.toLocaleString()}</span>
+        <span className="font-mono text-sm font-semibold text-foreground">KES {activeBalance.toLocaleString()}</span>
       </div>
+
+      {/* Sign in prompt for non-authenticated */}
+      {!user && (
+        <div className="pt-2 border-t border-border text-center space-y-2">
+          <p className="text-[10px] text-muted-foreground">Sign in to deposit real money and withdraw winnings</p>
+          <Button
+            size="sm"
+            onClick={() => navigate("/auth")}
+            className="text-xs gap-1.5"
+          >
+            <LogIn className="w-3 h-3" /> Sign In
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

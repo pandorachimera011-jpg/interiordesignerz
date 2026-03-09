@@ -7,9 +7,11 @@ import WalletModal from "@/components/WalletModal";
 
 const GameHeader = () => {
   const { muted, toggleMute } = useSound();
-  const { user, balance, signOut } = useAuth();
+  const { user, balance, demoBalance, isDemo, signOut } = useAuth();
   const navigate = useNavigate();
   const [walletOpen, setWalletOpen] = useState(false);
+
+  const displayBalance = isDemo ? demoBalance : balance;
 
   return (
     <>
@@ -47,27 +49,29 @@ const GameHeader = () => {
             )}
           </button>
 
+          {/* Balance display - always visible */}
+          <button
+            onClick={() => user ? setWalletOpen(true) : navigate("/auth")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/30 hover:bg-primary/30 transition-colors"
+          >
+            <Wallet className="w-3.5 h-3.5 text-primary" />
+            <div className="flex flex-col items-start">
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-muted-foreground leading-none">Balance</span>
+                {isDemo && (
+                  <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">
+                    Demo
+                  </span>
+                )}
+              </div>
+              <span className="text-xs font-mono font-bold text-foreground">
+                KES {displayBalance.toLocaleString()}
+              </span>
+            </div>
+          </button>
+
           {user ? (
             <>
-              <button
-                onClick={() => setWalletOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/30 hover:bg-primary/30 transition-colors"
-              >
-                <Wallet className="w-3.5 h-3.5 text-primary" />
-                <div className="flex flex-col items-start">
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-muted-foreground leading-none">Balance</span>
-                    {balance > 0 && (
-                      <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">
-                        Demo
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs font-mono font-bold text-foreground">
-                    KES {balance.toLocaleString()}
-                  </span>
-                </div>
-              </button>
               <button
                 onClick={() => navigate("/profile")}
                 className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors"
@@ -95,7 +99,7 @@ const GameHeader = () => {
         </div>
       </header>
 
-      <WalletModal open={walletOpen} onClose={() => setWalletOpen(false)} balance={balance} />
+      {user && <WalletModal open={walletOpen} onClose={() => setWalletOpen(false)} />}
     </>
   );
 };
