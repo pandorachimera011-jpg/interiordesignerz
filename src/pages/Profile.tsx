@@ -16,7 +16,7 @@ interface BetRecord {
 }
 
 const Profile = () => {
-  const { user, balance, refreshBalance, loading } = useAuth();
+  const { user, balance, demoBalance, isDemo, refreshBalance, loading } = useAuth();
   const navigate = useNavigate();
   const [bets, setBets] = useState<BetRecord[]>([]);
   const [loadingBets, setLoadingBets] = useState(true);
@@ -77,13 +77,17 @@ const Profile = () => {
   };
 
   const handleWithdraw = async () => {
+    if (isDemo || balance <= 0) {
+      toast.error("Withdrawals are only available for deposited/earned funds, not demo money.");
+      return;
+    }
     const amount = Number(withdrawAmount);
     if (amount < 100) {
       toast.error("Minimum withdrawal is KES 100");
       return;
     }
     if (amount > balance) {
-      toast.error("Insufficient balance");
+      toast.error("Amount exceeds your real balance");
       return;
     }
     setProcessing(true);
@@ -117,8 +121,18 @@ const Profile = () => {
       <div className="max-w-lg mx-auto p-4 space-y-4">
         {/* Balance Card */}
         <div className="bg-card border border-border rounded-xl p-5 text-center space-y-3">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Balance</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Real Balance</p>
           <p className="font-mono text-3xl font-bold text-foreground">KES {balance.toLocaleString()}</p>
+          {balance === 0 && (
+            <p className="text-[10px] text-muted-foreground">Deposit via M-Pesa to start playing with real money</p>
+          )}
+          <div className="pt-2 border-t border-border">
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Demo Balance</p>
+              <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-accent text-accent-foreground leading-none">Not Withdrawable</span>
+            </div>
+            <p className="font-mono text-sm text-muted-foreground">KES {demoBalance.toLocaleString()}</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Button onClick={() => { setShowDeposit(!showDeposit); setShowWithdraw(false); }} variant="default" className="gap-2">
               <ArrowDownToLine className="w-4 h-4" /> Deposit
