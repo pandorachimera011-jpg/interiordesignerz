@@ -9,7 +9,6 @@ interface Bet {
   autoCashout: number | null;
   cashedOut: boolean;
   cashoutMultiplier: number | null;
-  isDemo: boolean;
 }
 
 const CHANNEL_NAME = "crash-game-live";
